@@ -1,0 +1,5 @@
+spring.application.name=boot_gradle_240621
+#Server
+server.port=8382
+server.servlet.session.timeout=30
+
