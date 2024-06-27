@@ -65,7 +65,8 @@
 			<tr>
 				<td colspan="2">
  					<!-- <input type="submit" value="입력"> -->
-					<input type="button" onclick="fn_submit();" value="입력">
+					<!-- <input type="button" onclick="fn_submit();" value="입력"> -->
+					<button type="submit">입력</button>
 					&nbsp;&nbsp;
 					<a href="list">목록보기</a>
 				</td>
@@ -73,22 +74,55 @@
 		</form>
 	</table>
 	File Attach
+	<!-- 업로드된 파일 출력(화면 레이아웃-->
 	<div class="uploadDiv">
+		<!-- 업로드 버튼 -->
 		<input type="file" name="uploadFile" multiple="multiple">
 	</div>
 	<div class="uploadResult">
 		<ul>
-			
+			<!-- 업로드된 파일 출력 공간-->
 		</ul>
 	</div>
 </body>
 <script>
-	$(document).ready(function(e) {
+	$(document).ready(function(e) { //자바스크립 그룹
+		$("button[type='submit']").on('click', function(e) {
+			e.preventDefault();
+			var formObj = $("form[id='frm']");
+			var str = "";
+			
+			console.log("submit clicked");
+			$(".uploadResult ul li").each(function (i, obj) {
+				console.log("@# i => " + i);
+				console.log("@# obj => "+$(obj));
+				console.log("@# obj.data => "+$(obj).data());
+				console.log("@# obj.data(file) => "+$(obj).data("filename"));
+				console.log("@# obj.data(uuid) => "+$(obj).data("uuid"));
+				console.log("@# obj.data(path) => "+$(obj).data("path"));
+				console.log("@# obj.data(type) => "+$(obj).data("type"));
+				
+				var jobj = $(obj);
+				//console.dir(): javascript개체의 속성에 대한 목록을 표시
+				console.dir(jobj);
+				console.log("======================");
+				console.log(jobj.data("filename"));
+				
+				str += "<input type='hidden' name='attachList["+i+"].fileName' value='"+jobj.data("filename")+"'>";
+				str += "<input type='hidden' name='attachList["+i+"].uuid' value='"+jobj.data("uuid")+"'>";
+				str += "<input type='hidden' name='attachList["+i+"].uploadPath' value='"+jobj.data("path")+"'>";
+				str += "<input type='hidden' name='attachList["+i+"].image' value='"+jobj.data("type")+"'>";	
+				
+				console.log("@# str=>"+str);
+			}); //end .uploadResult ul li
+			formObj.append(str);
+			formObj.submit();
+		}); // end button submit
 		//확장자(exe, sh, alz), 파일크기 조건(5MB 미만)
 		//확장자가 exe|sh|alz 인 파일 금지하기 위한 정규식
 		var regex = new RegExp("(.*?)\.(exe|sh|alz)$");
 		var maxSize = 5242880; //5MB
-
+		//유효성 체크 -> 파일 이름, 파일 크기
 		function checkExtension(fileName, fileSize) {
 			if(fileSize >= maxSize) {
 				alert("파일 사이즈 초과");
@@ -101,7 +135,7 @@
 			return true;
 		}
 
-		$("input[type='file']").change(function (e) {
+		$("input[type='file']").change(function (e) { //파일이 추가될 때 실행
 			var formData = new FormData();
 			var inputFile = $("input[name='uploadFile']");
 			var files = inputFile[0].files; //파일 정보
@@ -118,11 +152,11 @@
 
 			$.ajax({
 				type: "post",
-				data: formData,
+				data: formData, //파일 정보
 				url: "uploadAjaxAction", //컨트롤러단 호출
 				processData: false, //기본은 key-value를 Query String으로 전송하는게 true (파일은 false)
 				contentType: false, //기본은 application / x-www-from-urlencoded; charset=UTF-8 (파일은 false -> multipart/form-data로 정송)
-				success: function(result) {
+				success: function(result) { //result->처리결과
 					alert("Uploaded");
 					console.log(result);
 					//파일 정보를 함수로 보냄
@@ -130,7 +164,7 @@
 				}
 			}); //end ajax
 
-			function showUploadResult(uploadREsultArr){
+			function showUploadResult(uploadREsultArr){ //이미지 T/F 따라서 처리
 				if(!uploadREsultArr || uploadREsultArr.length == 0) {
 					return;
 				}
@@ -139,26 +173,27 @@
 				var str = "";
 
 				$(uploadREsultArr).each(function (i, obj) {
-					if(obj.image) {
+					if(obj.image) { //이미지일때
 						var fileCallPath = encodeURIComponent(obj.uploadPath+"/s_"+obj.uuid+"_"+obj.fileName);
-						str += "<li><div>";
+						str += "<li data-filename='"+obj.fileName+"' data-uuid='"+obj.uuid+"' data-path='"+obj.uploadPath+"' data-filename='"+obj.fileName+"' data-type='"+obj.image+"'><div>";
 						str += "<span>"+obj.fileName+"</span>";
-						str += "<img src='/display?fileName="+fileCallPath.trim()+"'>" //이미지 출력 처리(컨트롤러단)
-						str += "<span data-file=\'"+fileCallPath+"\'data-type='image'> X </span>";
+						str += "<img src='/display?fileName="+fileCallPath+"'>" //이미지 출력 처리(컨트롤러단)
+						str += "<span data-file=\'"+fileCallPath+"\'data-type='image'> X </span>"; // 삭제 처리
 						str += "</div></li>";
-					} else {
+					} else { //이미지 아닐때
 						var fileCallPath = encodeURIComponent(obj.uploadPath+"/"+obj.uuid+"_"+obj.fileName);
-						str += "<li><div>";
+						str += "<li data-filename='"+obj.fileName+"' data-uuid='"+obj.uuid+"' data-path='"+obj.uploadPath+"' data-filename='"+obj.fileName+"' data-type='"+obj.image+"'<div>";
 						str += "<span>"+obj.fileName+"</span>";
-						str += "<img src='./resources/img/attach.png'>" //이미지 출력 처리(컨트롤러단)
+						str += "<img src='./resources/img/attach.png'>" //고정 이미지(attach.png) 출력 처리(컨트롤러단)
 						str += "<span data-file=\'"+fileCallPath+"\'data-type='file'> X </span>";
 						str += "</div></li>";
 					}
 				}); // end each
-				uploadUL.append(str);
+				uploadUL.append(str); //파일 목록 출력
 			}
 
-			$(".uploadResult").on("click", "span", function(){
+			//파일 삭제 ajax 방식으로 컨트롤러단 호출
+			$(".uploadResult").on("click", "span", function(){ 
 				var targetFile = $(this).data("file");
 				var type = $(this).data("type");
 				var uploadResultItem = $(this).closest("li");
@@ -173,6 +208,7 @@
 					url: "deleteFile",
 					success: function(result) {
 						alert(result);
+						uploadResultItem.remove();
 					}
 				}); //end ajax
 			}); //end click

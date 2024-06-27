@@ -7,6 +7,7 @@ import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.boot.dao.BoardAttachDAO;
 import com.boot.dao.BoardDAO;
 import com.boot.dto.BoardDTO;
 
@@ -32,11 +33,28 @@ public class BoardServiceImpl implements BoardService {
 
 	@Override
 	//public void write(String boardName, String boardTitle, String boardContent) {
-	public void write(HashMap<String, String> param) {
+	//public void write(HashMap<String, String> param) {
+	public void write(BoardDTO boardDTO) {
 		log.info("@# BoardServiceImpl write");
 		
 		BoardDAO dao = sqlSession.getMapper(BoardDAO.class);
-		dao.write(param);
+		BoardAttachDAO adao = sqlSession.getMapper(BoardAttachDAO.class);
+		dao.write(boardDTO);
+		log.info("@# boardDTO=>"+boardDTO);
+		
+		//첨부파일 있는지 체크
+		log.info("@# boardDTO.getAttachlist() => "+boardDTO.getAttachList());
+		if(boardDTO.getAttachList() == null || boardDTO.getAttachList().size() == 0) {
+			log.info("@# getAttachlist() => null");
+			return;
+		}
+		
+		//첨부파일 있는 겅우
+		boardDTO.getAttachList().forEach(attach -> {
+			attach.setBoardNo(boardDTO.getBoardNo());
+			log.info("@# attach=>"+attach);
+			adao.inserFile(attach);
+		});
 	}
 
 	@Override

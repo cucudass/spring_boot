@@ -51,6 +51,16 @@
 			</tr>
 		</form>
 	</table>
+	Files
+	<!-- 업로드된 파일 출력(화면 레이아웃-->
+	<div class="uploadResult">
+		<ul>
+			<!-- 업로드된 파일 출력 공간-->
+		</ul>
+		<div id="imageContainer">
+		
+		</div>
+	</div>
 	<div>
 		<input type="text" id="commentWriter" placeholder="작성자">
 		<input type="text" id="commentContent" placeholder="내용">
@@ -123,5 +133,57 @@
 			}
 		});
 	}
+</script>
+<script>
+	$(document).ready(function(){
+		//즉시 실행 함수
+		(function(){
+			console.log("@# document.ready");
+			var boardNo = "<c:out value='${content_view.boardNo }'/>";
+			console.log("@# boardNo=>"+boardNo);
+			
+			$.getJSON("/getFileList", {boardNo:boardNo}, function(arr){
+				console.log("@# arr=>"+arr);
+				var str = "";
+				$(arr).each(function(i, attach){
+					if(attach.image) {
+						var fileCallPath = encodeURIComponent(attach.uploadPath+"/s_"+attach.uuid+"_"+attach.fileName);
+						var originImage = encodeURIComponent(attach.uploadPath+"/"+attach.uuid+"_"+attach.fileName);
+						str += "<li data-filename='"+attach.fileName+"' data-uuid='"+attach.uuid+"' data-path='"+attach.uploadPath+"' data-filename='"+attach.fileName+"' data-type='"+attach.image+"' data-origin='"+originImage+"'><div>";
+						str += "<span>"+attach.fileName+"</span>";
+						str += "<img src='/display?fileName="+fileCallPath+"'>" //이미지 출력 처리(컨트롤러단)
+						//str += "<span data-file=\'"+fileCallPath+"\'data-type='image'> X </span>"; // 삭제 처리
+						str += "</div></li>";
+					} else {
+						//var fileCallPath = encodeURIComponent(attach.uploadPath+"/"+attach.uuid+"_"+attach.fileName);
+						str += "<li data-filename='"+attach.fileName+"' data-uuid='"+attach.uuid+"' data-path='"+attach.uploadPath+"' data-filename='"+attach.fileName+"' data-type='"+attach.image+"'<div>";
+						str += "<span>"+attach.fileName+"</span>";
+						str += "<img src='./resources/img/attach.png'>" //고정 이미지(attach.png) 출력 처리(컨트롤러단)
+						//str += "<span data-file=\'"+fileCallPath+"\'data-type='file'> X </span>";
+						str += "</div></li>";
+					}
+				}); // and $(arr)
+				$(".uploadResult ul").html(str);
+			}); //end getJSON
+			
+			$(".uploadResult").on("click", "li", function(e){
+				console.log('click');
+				var liObj = $(this);
+				if(liObj.data("type")) {
+					console.log("@# 01");
+					console.log("@# view");
+					$('#imageContainer').html("<img src='/display?fileName="+liObj.data("origin")+"'>");
+				} else {
+					console.log("@# 02");
+					console.log("@# download");
+				}
+			});//end $(".uploadResult").on
+			
+			$(".uploadResult #imageContainer").on("click", function() {
+				console.log("img click");
+				$(this).empty(); //선택한 요소의 모든 하위 요소 제거
+			});
+		})();
+	});// end ready
 </script>
 </html>

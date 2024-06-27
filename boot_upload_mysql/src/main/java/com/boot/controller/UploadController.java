@@ -1,5 +1,6 @@
 package com.boot.controller;
 
+import java.awt.PageAttributes.MediaType;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -8,9 +9,11 @@ import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +21,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.boot.dto.BoardAttachDTO;
+import com.boot.dto.BoardDTO;
+import com.boot.service.UploadService;
 
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnailator;
@@ -29,15 +36,19 @@ import net.coobird.thumbnailator.Thumbnailator;
 @Slf4j
 public class UploadController {
 	
+	@Autowired
+	private UploadService service;
+	
 	@PostMapping("/uploadAjaxAction")
 	//public void uploadAjaxPost(MultipartFile[] uploadFile) {
 	public ResponseEntity<List<BoardAttachDTO>> uploadAjaxPost(MultipartFile[] uploadFile) {
+		//파일 정보를 저장
 		log.info("upload ajax post...");
 		
 		ArrayList<BoardAttachDTO> list = new ArrayList<>();
 		
 		String uploadFolder = "D:\\dev\\upload";
-		String uploadFolderPath = getFolder();
+		String uploadFolderPath = getFolder();//년월일 폴더 생성 메소드
 		//"D:\\dev\\upload"+년월일 폴더
 		File uploadPath = new File(uploadFolder, uploadFolderPath);
 		log.info("@# uploadPath =>"+uploadPath);
@@ -46,14 +57,14 @@ public class UploadController {
 		if(!uploadPath.exists()) {
 			uploadPath.mkdirs();
 		}
-		
+		//여러 파일 정보를 저장(폴더)
 		for (MultipartFile multipartFile : uploadFile) {
 			log.info("==============================");
 			log.info("@# 파일 이름 => "+multipartFile.getOriginalFilename()); //업로드되는 파일 이름
 			log.info("@# 파일 크기 => "+multipartFile.getSize()); //업로드되는 파일 크기
 			
 			String uploadFileName = multipartFile.getOriginalFilename();
-			UUID uuid = UUID.randomUUID(); //랜덤 난수 생성
+			UUID uuid = UUID.randomUUID(); //중복 방지 랜덤 난수 생성
 			log.info("@# uuid => "+uuid);
 			
 			BoardAttachDTO boardattachDTO = new BoardAttachDTO();
@@ -73,6 +84,7 @@ public class UploadController {
 				multipartFile.transferTo(saveFile);
 				//참이면 이미지 파일
 				if(checkImageType(saveFile)) {
+					//썸네일 추가 로직
 					boardattachDTO.setImage(true);
 					log.info("@# boardattachDTO 02 => "+boardattachDTO);
 					
@@ -117,6 +129,7 @@ public class UploadController {
 			String contentType = Files.probeContentType(file.toPath());
 			log.info("@# contentType => "+contentType);
 			
+			//startsWith: 파일종류 판단
 			return contentType.startsWith("image"); //참이면 이미지 파일
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -127,6 +140,7 @@ public class UploadController {
 	//이미지 파일을 받아서 화면에 출력(byte 배열타입)
 	@GetMapping("/display")
 	public ResponseEntity<byte[]> getFile(String fileName) {
+		//폴더에 저장된 파일을 화면에 출력
 		log.info("@# fileName=> "+fileName);
 		
 		//업로드 파일경로+이름
@@ -143,7 +157,7 @@ public class UploadController {
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
-		return result;
+		return result; //결과를 jsp에 반환
 	}
 	
 	@PostMapping("/deleteFile")
@@ -157,7 +171,7 @@ public class UploadController {
 			
 			//이미지 파일이면 썸네일도 삭제
 			if(type.equals("image")) {
-				//getAbsolutePath: 절대 경고(full path)
+				//getAbsolutePath: 절대 경로(full path)
 				String largeFileName = file.getAbsolutePath().replace("s_", "");
 				log.info("@# largeFileName=>"+largeFileName);
 				
@@ -170,6 +184,15 @@ public class UploadController {
 			return new ResponseEntity<String>(HttpStatus.NOT_FOUND);
 		}
 		//deleted : success의 result로 전송
-		return new ResponseEntity<String>("deleted", HttpStatus.OK);
+		return new ResponseEntity<String>("deleted", HttpStatus.OK); //jsp단에서 경고창으로 출력
+	}
+	
+	@GetMapping(value ="/getFileList")
+	public ResponseEntity<List<BoardAttachDTO>> getFileList(@RequestParam HashMap<String, String> param) {
+		log.info("@# getFileList");
+		log.info("@# param=>"+param);
+		log.info("@# boardNo=>"+param.get("boardNo"));
+		
+		return new ResponseEntity<>(service.getFileList(Integer.parseInt(param.get("boardNo"))), HttpStatus.OK);
 	}
 }

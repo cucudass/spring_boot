@@ -9,6 +9,9 @@
     </select>
     
     <insert id="write">
+    	<selectKey keyProperty="boardNo" order="BEFORE" resultType="int">
+    		select ifnull(max(boardNo),0)+1 from tbl_board
+    	</selectKey>
         insert into tbl_board (boardName, boardTitle, boardContent, boardHit) values (
         	#{boardName}, #{boardTitle}, #{boardContent}, 0
         )

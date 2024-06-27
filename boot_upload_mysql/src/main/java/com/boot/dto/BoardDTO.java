@@ -1,6 +1,7 @@
 package com.boot.dto;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,4 +17,6 @@ public class BoardDTO {
 	private String boardContent;
 	private Timestamp boardDate;
 	private int boardHit;
+	
+	private List<BoardAttachDTO> attachList;
 }
