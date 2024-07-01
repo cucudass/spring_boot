@@ -20,14 +20,19 @@ public class PageController {
 	@Autowired
 	private PageService service;
 	
-	@RequestMapping("/listWithPaging")
+	//@RequestMapping("/listWithPaging")
+	@RequestMapping("/list")
 	public String listWithPaging(Criteria cri, Model model) {
 		log.info("@# list");
 		log.info("@# cri=> "+cri);
 		
 		ArrayList<BoardDTO> list = service.listWithPaging(cri);
+		int total = service.getTotalCount();
+		log.info("@# total=> "+total);
+		
 		model.addAttribute("list", list);
-		model.addAttribute("pageMaker", new PageDTO(123, cri));
+		model.addAttribute("pageMaker", new PageDTO(total, cri));
+		
 		return "list";
 	}
 }

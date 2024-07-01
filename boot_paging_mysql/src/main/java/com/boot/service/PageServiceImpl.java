@@ -29,4 +29,13 @@ public class PageServiceImpl implements PageService {
 		
 		return list;
 	}
+
+	@Override
+	public int getTotalCount() {
+		log.info("@# PageServiceImpl getTotalCount");
+		
+		PageDAO dao = sqlSession.getMapper(PageDAO.class);
+		int total = dao.getTotalCount();
+		return total;
+	}
 }

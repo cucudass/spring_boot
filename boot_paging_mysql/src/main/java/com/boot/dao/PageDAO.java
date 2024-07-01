@@ -10,4 +10,5 @@ import com.boot.dto.Criteria;
 @Mapper
 public interface PageDAO {
 	public ArrayList<BoardDTO> listWithPaging(Criteria criteria);
+	public int getTotalCount();
 }

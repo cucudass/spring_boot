@@ -10,10 +10,12 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.boot.dto.BoardAttachDTO;
 import com.boot.dto.BoardDTO;
 import com.boot.dto.CommentDTO;
+import com.boot.dto.PageDTO;
 import com.boot.service.BoardService;
 import com.boot.service.CommentService;
 import com.boot.service.UploadService;
@@ -32,7 +34,7 @@ public class BoardContoller {
 	private UploadService uploadservice;
 	
 	//게시판 목록 조회
-	@RequestMapping("/list")
+	@RequestMapping("/list_old")
 	public String list(Model model) {
 		log.info("@# list");
 		
@@ -74,20 +76,28 @@ public class BoardContoller {
 		
 		model.addAttribute("content_view", dto);
 		model.addAttribute("commentList", commentList);
+		model.addAttribute("pageMaker", param);
 		
 		return "content_view";
 	}
 
 	@RequestMapping("/modify")
-	public String modify(@RequestParam HashMap<String, String> param) {
+	//public String modify(@RequestParam HashMap<String, String> param) {
+	public String modify(@RequestParam HashMap<String, String> param, RedirectAttributes rttr) {
 		log.info("@# modify");
-		
+		log.info("@# param=> "+param);
 		service.modify(param);
+		
+		//페이지 이동시 페이지번호, 글 갯수 추가
+		rttr.addAttribute("pageNum", param.get("pageNum"));
+		rttr.addAttribute("amount", param.get("amount"));
+		
 		return "redirect:list";
 	}
 	
 	@RequestMapping("/delete")
-	public String delete(@RequestParam HashMap<String, String> param) {
+	//public String delete(@RequestParam HashMap<String, String> param) {
+	public String delete(@RequestParam HashMap<String, String> param, RedirectAttributes rttr) {
 		log.info("@# delete");
 		log.info("@# parma.get(boardNo)=> "+param.get("boardNo"));
 		service.delete(param);
@@ -98,6 +108,10 @@ public class BoardContoller {
 		List<BoardAttachDTO> fileList = uploadservice.getFileList(boardNo); 
 		log.info("@# fileList=> "+fileList);
 		uploadservice.deleteFiles(fileList); //실제 파일 삭제
+		
+		//페이지 이동시 페이지번호, 글 갯수 추가
+		rttr.addAttribute("pageNum", param.get("pageNum"));
+		rttr.addAttribute("amount", param.get("amount"));
 		
 		return "redirect:list";
 	}
